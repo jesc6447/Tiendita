@@ -98,6 +98,3 @@ document.addEventListener("DOMContentLoaded", cargarProductos);
 
 // Agregamos el evento para que se abre la función al dar clic en guardar producto
 formProducto.addEventListener("submit", agregarProducto);
-
-
-formProducto.addEventListener("submit", agregarProducto);
