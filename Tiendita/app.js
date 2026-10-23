@@ -89,7 +89,40 @@ async function eliminarProducto(id_producto){
         console.log(error)
     }
 }
+// ==========================================
+// 3. Comprar Producto (POST /comprar)
+// ==========================================
+async function comprarProducto(id_producto) {
+    try {
+        const respuesta = await fetch(`${API_URL}/productos/${id_producto}/comprar`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" }
+        });
 
+        const datos = await respuesta.json();
+
+        if (respuesta.ok) {
+            // Compra exitosa
+            alert(datos.Message || "¡Compra realizada con éxito!");
+            await cargarProductos(); // Recargar para ver el nuevo stock
+        } else {
+            // Manejo de errores específicos del backend
+            let mensaje = datos.detail || datos.Message || "Error al procesar la compra";
+            
+            if (respuesta.status === 429) {
+                mensaje = "¡Demasiadas peticiones! Tu middleware te está protegiendo. Espera un momento.";
+            } else if (respuesta.status === 404) {
+                mensaje = "El producto ya no existe en el inventario.";
+            }
+            
+            alert(mensaje);
+            await cargarProductos(); // Recargar por si el producto se eliminó al llegar a 0
+        }
+    } catch (error) {
+        console.error("Error al comprar:", error);
+        alert("Error de conexión al procesar la compra.");
+    }
+}
 
 
 // Cargar catálogo al abrir la página
