@@ -1,7 +1,7 @@
 """
 Title: main.py
 Description: Este archivo contiene la implementación de una API RESTful utilizando FastAPI para gestionar un inventario de productos electrónicos. La API permite consultar, agregar y eliminar productos del inventario. Además, se ha configurado CORS para permitir solicitudes desde cualquier origen.
-fecha: 2024-06-15
+fecha: 2026-06-15
 Autor: Juan Emmanuel Sanchez Castañon
 """
 
@@ -26,7 +26,7 @@ app.add_middleware(
 # ==========================================
 # 3. MIDDLEWARE DE RATE LIMITING (Límite de peticiones)
 # ==========================================
-MAX_REQUESTS = 5          # Máximo de peticiones permitidas
+"""MAX_REQUESTS = 5          # Máximo de peticiones permitidas
 TIME_WINDOW = 1.0         # Ventana de tiempo en segundos (1 segundo)
 
 # Cola para almacenar las marcas de tiempo de las peticiones recientes
@@ -59,6 +59,7 @@ async def rate_limit_middleware(request: Request, call_next):
     # Procesar la petición y devolver la respuesta
     response = await call_next(request)
     return response
+    """
 
 inventario = [
     {"id": 1, "nombre": "Arduino Uno R3 (Original)", "precio": 450.00, "cantidad": 15},
@@ -86,11 +87,6 @@ class respuestaProducto(BaseModel):
     precio: float
     cantidad: int
 
-@app.get("/meseros")
-async def consultar_db():
-    await asyncio.sleep(5) 
-    print("Consulta a la base de datos completada") # Simula una operación de consulta a la base de datos
-    return {"status":"ok"}
 
 @app.get("/")
 def home():
@@ -104,9 +100,19 @@ def home():
 async def getProductos():
     """
     Obtiene todos los productos. 
-    rápida y no bloqueante.
+    Es una operación rápida y no bloqueante.
     """
     return inventario
+
+@app.get("/productos/{producto_id}")
+async def getProducto(producto_id: int):
+    """
+    Obtiene un producto por su ID.          
+    """
+    for producto in inventario:
+        if producto["id"] == producto_id:
+            return producto
+    raise HTTPException(status_code=404, detail="Producto no encontrado")
 
 @app.post("/productos", response_model=respuestaProducto, status_code=status.HTTP_201_CREATED)
 async def addProducto(producto: crearProducto):
@@ -136,6 +142,7 @@ async def addProducto(producto: crearProducto):
 async def deleteProducto(producto_id: int):
     """
     Elimina un producto por su ID.
+    Es una operación rápida y no bloqueante.
     Al igual que en GET, no se usa 'await' porque la búsqueda y 
     eliminación en una lista en memoria es instantánea.
     """
@@ -153,7 +160,7 @@ async def deleteProducto(producto_id: int):
 
 lock = asyncio.Lock()
 
-@app.post("/productos/{producto_id}/comprar")
+@app.post("/productos/{producto_id}")
 async def comprarProducto(producto_id: int):
     """
     Endpoint para simular la compra de un producto por su ID.

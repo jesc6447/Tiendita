@@ -1,3 +1,9 @@
+/**
+Title: app.js
+Description: Archivo JavaScript para la funcionalidad del frontend de la tiendita.
+fecha: 14 de octubre de 2026
+Autor: Juan Emmanuel Sanchez Castañon
+**/
 const API_URL = "http://127.0.0.1:8000/productos";
 
 // Selección de Elementos del DOM
@@ -39,6 +45,9 @@ async function cargarProductos() {
                     </span>
                 </td>
                 <td class="text-end">
+                    <button class="btn btn-outline-primary btn-sm me-2" onclick="comprarProducto(${p.id})">
+                        <i class="bi bi-cart-check"></i> Comprar
+                    </button>
                     <button class="btn btn-outline-danger btn-sm" onclick="eliminarProducto(${p.id})">
                         <i class="bi bi-trash"></i> Eliminar
                     </button>
@@ -94,7 +103,7 @@ async function eliminarProducto(id_producto){
 // ==========================================
 async function comprarProducto(id_producto) {
     try {
-        const respuesta = await fetch(`${API_URL}/productos/${id_producto}/comprar`, {
+        const respuesta = await fetch(`${API_URL}/${id_producto}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" }
         });
