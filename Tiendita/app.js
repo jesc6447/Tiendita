@@ -1,21 +1,26 @@
 /**
-Title: app.js
-Description: Archivo JavaScript para la funcionalidad del frontend de la tiendita.
-fecha: 14 de octubre de 2026
-Autor: Juan Emmanuel Sanchez Castañon
-**/
-const API_URL = "http://127.0.0.1:8000/productos";
+ Title: app.js
+ Description: Archivo JavaScript para la funcionalidad del frontend de la tiendita.
+ Fecha: 14 de octubre de 2026
+ Autor: Juan Emmanuel Sanchez Castañon
+ **/
+
+const API_URL = "http://127.0.0.1:8000";
 
 // Selección de Elementos del DOM
 const formProducto = document.getElementById("formProducto");
 const tablaProductos = document.getElementById("tablaProductos");
 const totalProductos = document.getElementById("totalProductos");
 
-
 // 1. Función para Cargar Productos (GET)
 async function cargarProductos() {
     try {
-        const respuesta = await fetch(API_URL);
+        const respuesta = await fetch(`${API_URL}/productos`);
+        
+        if (!respuesta.ok) {
+            throw new Error("Error al obtener los productos del servidor");
+        }
+
         const productos = await respuesta.json();
 
         tablaProductos.innerHTML = "";
@@ -31,14 +36,12 @@ async function cargarProductos() {
             return;
         }
 
-        
-
         productos.forEach(p => {
             const fila = document.createElement("tr");
             fila.innerHTML = `
                 <td class="fw-bold text-secondary">#${p.id}</td>
                 <td>${p.nombre}</td>
-                <td class="text-success fw-bold">$${p.precio}</td>
+                <td class="text-success fw-bold">$${p.precio.toFixed(2)}</td>
                 <td>
                     <span class="badge ${p.cantidad < 10 ? 'bg-danger' : 'bg-success'}">
                         ${p.cantidad} unidades
@@ -58,74 +61,97 @@ async function cargarProductos() {
 
     } catch (error) {
         console.error("Error al cargar productos:", error);
+        alert("No se pudo conectar con el servidor para cargar los productos.");
     }
 }
 
-async function agregarProducto(event){
+// 2. Función para Agregar Producto (POST)
+async function agregarProducto(event) {
     event.preventDefault();
+    const nombre = document.getElementById("nombre").value.trim();
+    const precio = parseFloat(document.getElementById("precio").value);
+    const cantidad = parseInt(document.getElementById("cantidad").value, 10);
 
-    var nombre = document.getElementById("nombre").value
-    var precio = document.getElementById("precio").value
-    var cantidad = document.getElementById("cantidad").value
+    const nuevoContenido = { nombre, precio, cantidad };
 
-    const nuevoContenido = {nombre, precio, cantidad}
     try {
-        const respuesta = await fetch(API_URL, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(nuevoContenido)});
+        const respuesta = await fetch(`${API_URL}/productos`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(nuevoContenido)
+        });
 
-        if(respuesta){
+        if (respuesta.ok) {
             formProducto.reset();
             await cargarProductos();
-        }else{
-            console.error("Hubo algo malo al guardar")
+            alert("Producto agregado correctamente");
+        } else {
+            const errorData = await respuesta.json();
+            console.error("Error al guardar:", errorData);
+            alert(`Error al guardar: ${errorData.detail || "Datos inválidos"}`);
         }
     } catch (error) {
-        console.log(error)
+        console.error("Error de red al agregar producto:", error);
+        alert("Error de conexión al intentar agregar el producto.");
     }
 }
 
-async function eliminarProducto(id_producto){
-    event.preventDefault();
+// 3. Función para Eliminar Producto (DELETE)
+async function eliminarProducto(id_producto) {
+    if (!confirm("¿Estás seguro de que deseas eliminar este producto?")) {
+        return; // Cancelar si el usuario dice que no
+    }
 
     try {
-        const respuesta = await fetch("http://127.0.0.1:8000/productos/"+id_producto, {method: "DELETE", headers: {"Content-Type": "application/json"}});
+        const respuesta = await fetch(`${API_URL}/productos/${id_producto}`, {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" }
+        });
 
-        if(respuesta){
+        if (respuesta.ok) {
             await cargarProductos();
-        }else{
-            console.error("Hubo algo malo al eliminar")
+            alert("🗑️ Producto eliminado correctamente");
+        } else {
+            const errorData = await respuesta.json();
+            alert(`❌ Error: ${errorData.detail || "No se pudo eliminar el producto"}`);
         }
     } catch (error) {
-        console.log(error)
+        console.error("Error de red al eliminar producto:", error);
+        alert("Error de conexión al intentar eliminar el producto.");
     }
 }
-// ==========================================
-// 3. Comprar Producto (POST /comprar)
-// ==========================================
+
+// 4. Función para Comprar Producto (POST /productos/{id})
 async function comprarProducto(id_producto) {
     try {
-        const respuesta = await fetch(`${API_URL}/${id_producto}`, {
+        const respuesta = await fetch(`${API_URL}/productos/${id_producto}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" }
         });
 
-        const datos = await respuesta.json();
+        let datos = {};
+        try {
+            datos = await respuesta.json();
+        } catch (e) {
+            datos = { detail: "Respuesta no válida del servidor" };
+        }
 
         if (respuesta.ok) {
-            // Compra exitosa
-            alert(datos.Message || "¡Compra realizada con éxito!");
+            alert(`¡Compra realizada con éxito!\n${datos.mensaje || "Producto comprado"}`);
             await cargarProductos(); // Recargar para ver el nuevo stock
         } else {
-            // Manejo de errores específicos del backend
-            let mensaje = datos.detail || datos.Message || "Error al procesar la compra";
+            let mensaje = datos.detail || "Error al procesar la compra";
             
             if (respuesta.status === 429) {
-                mensaje = "¡Demasiadas peticiones! Tu middleware te está protegiendo. Espera un momento.";
+                mensaje = "¡Demasiadas peticiones! Tu middleware te está protegiendo. Espera un segundo.";
             } else if (respuesta.status === 404) {
                 mensaje = "El producto ya no existe en el inventario.";
+            } else if (respuesta.status === 400) {
+                mensaje = `Sin stock: ${mensaje}`;
             }
             
             alert(mensaje);
-            await cargarProductos(); // Recargar por si el producto se eliminó al llegar a 0
+            await cargarProductos(); // Recargar por si acaso
         }
     } catch (error) {
         console.error("Error al comprar:", error);
@@ -133,10 +159,75 @@ async function comprarProducto(id_producto) {
     }
 }
 
+// 5. Función para Cargar Análisis (GET /api/analisis/mas-vendidos)
+async function cargarAnalisis() {
+    try {
+        
+        const respuesta = await fetch(`${API_URL}/api/analisis/mas-vendidos`);
+        
+        if (!respuesta.ok) {
+            throw new Error(`Error HTTP: ${respuesta.status}`);
+        }
 
-// Cargar catálogo al abrir la página
-document.addEventListener("DOMContentLoaded", cargarProductos);
+        const datos = await respuesta.json();
+        
+        // 1. Extraemos etiquetas y valores
+        const labels = datos.map(item => item.producto);
+        const valores = datos.map(item => item.monto_total);
 
+        // 2. Generamos los colores dinámicamente
+        const colores = datos.map((_, i) => {
+            const coloresBase = [
+                [255, 99, 132], [255, 159, 64], [255, 205, 86],
+                [75, 192, 192], [54, 162, 235], [153, 102, 255],
+                [201, 203, 207], [255, 99, 71], [0, 206, 209]
+            ];
+            const color = coloresBase[i % coloresBase.length];
+            return `rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.7)`; // Opacidad 0.7 para buen contraste
+        });
 
-// Agregamos el evento para que se abre la función al dar clic en guardar producto
-formProducto.addEventListener("submit", agregarProducto);
+        const canvas = document.getElementById("myChart");
+
+        // 3. Evitamos el error "Canvas is already in use" si se recarga el gráfico
+        if (window.miGrafico) {
+            window.miGrafico.destroy();
+        }
+        Chart.register(ChartDataLabels);
+        // 4. Creamos el gráfico usando la variable 'colores'
+        window.miGrafico = new Chart(canvas, {
+            type: "bar",
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: "Ingresos ($)",
+                        data: valores,
+                        backgroundColor: colores,
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                indexAxis: "y",
+                responsive: true,
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error("Error al cargar el análisis de ventas:", error);
+    }
+}
+
+// Cargar catálogo y análisis al abrir la página
+document.addEventListener("DOMContentLoaded", () => {
+    cargarProductos();
+    cargarAnalisis();
+});
+
+// Evento para que se ejecute la función al dar clic en guardar producto
+if (formProducto) {
+    formProducto.addEventListener("submit", agregarProducto);
+}
