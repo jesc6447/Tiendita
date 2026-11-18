@@ -139,6 +139,9 @@ async function comprarProducto(id_producto) {
         if (respuesta.ok) {
             alert(`¡Compra realizada con éxito!\n${datos.mensaje || "Producto comprado"}`);
             await cargarProductos(); // Recargar para ver el nuevo stock
+            await cargarAnalisis();      
+            await cargarGraficoTicket(); 
+            await cargarKPIs();    
         } else {
             let mensaje = datos.detail || "Error al procesar la compra";
             
@@ -221,10 +224,93 @@ async function cargarAnalisis() {
     }
 }
 
+async function cargarKPIs() {
+    try {
+        const res = await fetch(`${API_URL}/api/analisis/kpis`);
+        if (!res.ok) return;
+        const data = await res.json();
+
+        document.getElementById("kpi-ingresos").textContent = 
+            `$${data.ingresos_totales.toLocaleString('es-MX', {minimumFractionDigits: 2})}`;
+        document.getElementById("kpi-estrella").textContent = data.producto_estrella;
+        document.getElementById("kpi-ticket").textContent = 
+            `$${data.ticket_promedio.toLocaleString('es-MX', {minimumFractionDigits: 2})}`;
+    } catch (error) {
+        console.error("Error cargando KPIs:", error);
+    }
+}
+
+
+async function cargarGraficoTicket() {
+    const canvas = document.getElementById("graficoTicket");
+    if (!canvas) return;
+
+    try {
+        const res = await fetch(`${API_URL}/api/analisis/mas-vendidos`);
+
+        if (!res.ok) {
+            throw new Error(`Error HTTP: ${res.status}`);
+        }
+
+        const datos = await res.json();
+
+        // Destruir la gráfica anterior si existe
+       const graficaAnterior = Chart.getChart(canvas);
+
+    if (graficaAnterior) {
+        graficaAnterior.destroy();
+    }
+
+        // Verificar si existen datos para representar
+        if (!datos || datos.length === 0) {
+            console.warn("No hay ventas registradas para mostrar en la gráfica.");
+
+            const ctx = canvas.getContext("2d");
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            return;
+        }
+
+        window.graficoTicket = new Chart(canvas, {
+            type: "doughnut",
+            data: {
+                labels: datos.map(d => d.producto),
+                datasets: [{
+                    data: datos.map(d => Number(d.monto_total)),
+                    backgroundColor: [
+                        "#2563eb",
+                        "#0891b2",
+                        "#059669",
+                        "#7c3aed",
+                        "#ea580c"
+                    ],
+                    borderWidth: 2,
+                    borderColor: "#ffffff"
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: "bottom"
+                    }
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error("Error cargando gráfica ticket:", error);
+    }
+}
+
+
 // Cargar catálogo y análisis al abrir la página
 document.addEventListener("DOMContentLoaded", () => {
     cargarProductos();
     cargarAnalisis();
+    cargarGraficoTicket(); // Gráfica de dona
+    cargarKPIs(); 
 });
 
 // Evento para que se ejecute la función al dar clic en guardar producto

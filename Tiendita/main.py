@@ -252,3 +252,38 @@ def obtener_mas_vendidos():
     )
 
     return df_agrupado.to_dict(orient="records")
+
+@app.get("/api/analisis/ticket-promedio")
+def obtener_ticket_promedio():
+    if not os.path.isfile("ventas.csv"):
+        return {"total_ventas": 0, "ticket_promedio": 0.0}
+    df = pd.read_csv("ventas.csv")
+    if df.empty:
+        return {"total_ventas": 0, "ticket_promedio": 0.0}
+    total_ventas = len(df)
+    ticket_promedio = float(df["monto_total"].mean())
+    return {
+        "total_ventas": total_ventas,
+        "ticket_promedio": round(ticket_promedio, 2)
+    }
+
+@app.get("/api/analisis/kpis")
+def obtener_kpis():
+    if not os.path.isfile("ventas.csv"):
+        return {"ingresos_totales": 0, "producto_estrella": "N/A", "ticket_promedio": 0}
+    
+    df = pd.read_csv("ventas.csv")
+    if df.empty:
+        return {"ingresos_totales": 0, "producto_estrella": "N/A", "ticket_promedio": 0}
+        
+    ingresos_totales = float(df["monto_total"].sum())
+    ticket_promedio = float(df["monto_total"].mean())
+    
+    producto_estrella_df = df.groupby("producto")["monto_total"].sum().reset_index()
+    producto_estrella = producto_estrella_df.sort_values(by="monto_total", ascending=False).iloc[0]["producto"]
+    
+    return {
+        "ingresos_totales": round(ingresos_totales, 2),
+        "producto_estrella": producto_estrella,
+        "ticket_promedio": round(ticket_promedio, 2)
+    }

@@ -1,0 +1,13 @@
+id,nombre,precio,cantidad
+1,Arduino Uno R3 (Original),450.0,3
+2,Raspberry Pi 4 Model B (4GB),1500.0,5
+3,ESP32 DevKit V1 (Wi-Fi + BT),180.0,27
+4,Sensor Ultrasónico HC-SR04,45.0,50
+5,Protoboard 830 Puntos,85.0,39
+6,Kit de Resistencias Variadas (500 pzs),120.0,23
+7,Módulo Relé 5V 1 Canal,35.0,58
+8,Pantalla LCD 16x2 con Módulo I2C,95.0,19
+9,Servomotor SG90 Micro,65.0,35
+10,Fuente de Poder Regulable 5V 3A,250.0,11
+11,Resistencia 100,2.0,995
+12,Arduino Uno Q,1500.0,20
