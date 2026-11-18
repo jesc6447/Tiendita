@@ -29,3 +29,12 @@ id_venta,fecha,producto,precio,cantidad,monto_total
 28,2026-11-18 15:42,Arduino Uno R3 (Original),450.0,1,450.0
 29,2026-11-18 15:43,Kit de Resistencias Variadas (500 pzs),120.0,1,120.0
 30,2026-11-18 15:44,Pantalla LCD 16x2 con Módulo I2C,95.0,1,95.0
+31,2026-11-18 16:00,ESP32 DevKit V1 (Wi-Fi + BT),180.0,1,180.0
+32,2026-11-18 16:04,Fuente de Poder Regulable 5V 3A,250.0,1,250.0
+33,2026-11-18 16:07,Resistencia 100,2.0,1,2.0
+34,2026-11-18 16:07,Resistencia 100,2.0,1,2.0
+35,2026-11-18 16:07,Resistencia 100,2.0,1,2.0
+36,2026-11-18 16:07,Resistencia 100,2.0,1,2.0
+37,2026-11-18 16:08,Resistencia 100,2.0,1,2.0
+38,2026-11-18 16:08,Resistencia 100,2.0,1,2.0
+39,2026-11-18 16:08,Resistencia 100,2.0,1,2.0
